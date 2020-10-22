@@ -1,0 +1,371 @@
+import copy
+print("The following programm computes the number of equivalent classes of degree sequences for polyhedra with n vertices, as well the degree sequences of each class. ")
+print("I=(total number of classes,number of classes of degree 3,...,number of classes of degree n-1) ")
+n=int(input("Enter the number of vertices of the polyhedron: "))-1
+
+T=[[],[],[],[[[0,1,2],[0,1,3],[0,3,2],[1,2,3]]]]
+
+
+C=[[],[],[],[[3,3,3,3]]]
+
+
+I=[[],[],[],[1,1]]
+
+
+
+def f(T):
+    T_out=copy.deepcopy(T)
+    for j in range(1,len(T)):
+        for k in range(3):
+            if T[j][k]==0:
+                T_out[j][k]=3
+            if T[j][k]>2:
+                T_out[j][k]+=1
+    T_out.append([0,1,3])
+    T_out.append([0,3,2])
+    return T_out
+
+def combi(T,x):
+    L=len(T)
+
+    compteur=0
+    for j in range(L):
+        if x in T[j]:
+            compteur+=1
+    return compteur
+
+
+def adj(T):
+    L=len(T)
+    N=int((L+2)/2)
+    adj=[2]
+    degre=0
+    for i in range(L):
+        if 0 in T[i]:
+            degre+=1
+    for j in range(1,degre-1):
+        adj.append(0)
+    adj.append(1)
+    for k in range(degre-2):
+        for s in range(3,N+1):
+            if ((s not in adj) and (([0,adj[k],s] in T) or ([adj[k],s,0] in T) or ([s,0,adj[k]] in T) or \
+				    ([adj[k],0,s] in T) or ([s,adj[k],0] in T) or ([0,s,adj[k]] in T))):
+                adj[k+1]=s
+    return adj
+
+
+
+def adja(T,p,q,D,N):
+
+    ind=0
+    k=0
+
+    Tcop=copy.deepcopy(T)
+    A=[q]
+
+    for d in range(D-1):
+        ind=0
+        for s in range(N+1):
+            for X in range(len(Tcop)):
+                if (p in Tcop[X]) and (A[k] in Tcop[X]) and (s in Tcop[X]) and (s!=p) and (s!=A[k]):
+                    A.append(s)
+                    Tcop.remove(Tcop[X])
+                    k+=1
+                    ind=1
+                    break
+            if ind==1:
+                break
+
+    return A
+
+def ORD(T,t,n,k):
+    for Y in range(len(T)):
+        if (t[0] in T[Y]) and (t[1] in T[Y]) and (t[2] in T[Y]):
+            t=T[Y]
+    if (0 not in t) or (1 not in t) or (2 not in t):
+        t=[t[0],t[2],t[1]]
+    if k==1:
+        t=[t[1],t[2],t[0]]
+    if k==2:
+        t=[t[2],t[0],t[1]]
+    ordre=[t[0],t[1],t[2]]
+    Tprime=copy.deepcopy(T)
+    D=combi(Tprime,t[0])
+    for X in range(len(Tprime)):
+        if (ordre[0] in Tprime[X]) and (ordre[1] in Tprime[X]) and (ordre[2] in Tprime[X]):
+            Tprime.remove(Tprime[X])
+            break
+    p=0
+    q=2
+
+    while len(ordre)<n+1:
+
+
+        P=ordre[p]
+        Q=ordre[q]
+
+
+        adjac=adja(Tprime,P,Q,D,n)
+
+
+        for a in adjac:
+            if a not in ordre:
+                ordre.append(a)
+
+        if len(ordre)==n+1:
+            break
+
+
+        for Y in adjac:
+
+            for tau in Tprime:
+                if (P in tau) and (Y in tau):
+                    Tprime.remove(tau)
+                    break
+
+
+        if combi(Tprime,ordre[p+1])!=0:
+            p+=1
+            q=len(ordre)-1
+            indi=1
+            while indi==1:
+                for X in range(len(Tprime)):
+                    if (ordre[p] in Tprime[X]) and (ordre[q] in Tprime[X]):
+                        indi=0
+                        break
+                    else:
+                        indi=1
+                if indi==1:
+                    q-=1
+
+
+        else:
+            while (p<len(ordre)-1) and (combi(Tprime,ordre[p+1])==0):
+                p+=1
+                q-=1
+        D=combi(Tprime,ordre[p])+1
+
+
+
+
+
+    return ordre
+
+
+def flip(T,p,q,s):
+    copieT=copy.deepcopy(T)
+    t1=[]
+    t2=[]
+    for i in range(len(T)):
+        if (0 in T[i]) and (p in T[i]) and (q in T[i]):
+            t1=T[i]
+            break
+    for j in range(len(T)):
+        if (p in T[j]) and (q in T[j]) and (s in T[j]):
+            t2=T[j]
+            break
+    copieT.remove(t1)
+    copieT.remove(t2)
+    copieT.append([0,q,s])
+    copieT.append([0,s,p])
+
+
+    return copieT
+
+
+for Z in range(3,n):
+
+
+    I.append([I[Z][0],I[Z][0]])         #on initialise I_{Z+1}[0]=I_{Z+1}[1]=I_{Z}[0]
+    T.append([])                        #on ajoute une case à T_Z
+    C.append([])                        #on ajoute une case à C_Z
+
+
+
+#triangulations de degré 3 de V_{Z+1}
+
+    Tprime=[]
+    com=[]
+
+    for i in range(I[Z][0]):
+        Tprime=f(T[Z][i])
+
+        T[Z+1].append(Tprime)
+        com=[combi(Tprime,y) for y in ORD(Tprime,[0,1,2],Z+1,0)]
+
+        C[Z+1].append(com)
+
+
+
+
+#triangulations de degré d de V_{Z+1} (de d-1 à d pour d dans [4,Z+1])
+
+    for k in range(2,Z):     #on initialise I[Z+1][2],...,I[Z+1][Z-1] à 0
+        I[Z+1].append(0)
+
+
+    F=[]
+    com=[]
+    a=[]
+    for d in range(4,Z+2):   #on fixe le degré d de 0 (étape d-1-->d)
+
+        for X in range(I[Z+1][0]-I[Z+1][d-3],I[Z+1][0]):  #on fixe une triangulation T[Z+1][X] de degré d-1
+
+            a=adj(T[Z+1][X])         #tableau des adjacents à 0 dans T[Z+1][X]
+
+            for Y in range(d-2):
+                p=a[Y]
+                q=a[Y+1]
+                for s in range(3,Z+2):
+                    if (s not in a) and (([p,q,s] in T[Z+1][X]) or ([q,s,p] in T[Z+1][X]) or ([s,p,q] in T[Z+1][X]) or\
+                                     ([q,p,s] in T[Z+1][X]) or ([p,s,q] in T[Z+1][X]) or ([s,q,p] in T[Z+1][X])):
+
+                        F=flip(T[Z+1][X],p,q,s)
+
+                        T[Z+1].append(F)
+
+                        com=[combi(F,y) for y in ORD(F,[0,1,2],Z+1,0)]
+
+                        C[Z+1].append(com)
+                        I[Z+1][d-2]+=1
+        I[Z+1][0]+=I[Z+1][d-2]
+
+
+
+
+#combinatoires distinctes
+
+
+    A=0
+    D=0
+
+    Ic=copy.deepcopy(I[Z+1])
+    for d in range(3,Z+2):
+        D=A
+        A=A+I[Z+1][d-2]
+        if D+1<A:
+            for i in range(D+1,A):
+                for j in range(D,i):
+                    if C[Z+1][j]==C[Z+1][i]:
+                        C[Z+1][i]=[]
+                        T[Z+1][i]=[]
+                        Ic[0]-=1
+                        Ic[d-2]-=1
+                        break
+
+    I[Z+1]=Ic
+    L=len(C[Z+1])
+    j=0
+    for i in range(L):
+        if C[Z+1][j]==[]:
+            C[Z+1].remove(C[Z+1][j])
+            T[Z+1].remove(T[Z+1][j])
+        else:
+            j+=1
+
+
+
+
+
+
+
+
+    print ("I" + str(Z+1) + ": ")
+    print (I[Z+1])
+   #print ("T" + str(Z+1) + ": ")
+   #print (T[Z+1])
+   #print ("C" + str(Z+1) + ": ")
+   #print (C[Z+1])
+    input ("select enter to continu")
+
+
+   #combinatoires équivalentes
+
+   #############################
+   #initialisation de classequi#
+   #############################
+
+    classequi=[[]]
+
+    for i in range(len(C[Z+1])-1):
+        classequi.append([])
+    for i in range(len(C[Z+1])):
+        classequi[i].append(C[Z+1][i])
+
+
+
+
+   #######################################
+   #calcul de chaque classe d'équivalence#
+   #######################################
+    R=[]
+    c=[]
+    for i in range(len(T[Z+1])):    #on fixe un triangle T[n+1][i][j] et un ordre de vue k
+        for j in range(2*Z):
+            for k in range(3):
+                if (j!=0) or (k!=0):
+                    R=ORD(T[Z+1][i],T[Z+1][i][j],Z+1,k)
+
+                    c=[combi(T[Z+1][i],y) for y in R]
+                    if c not in classequi[i]:
+                        classequi[i].append(c)
+
+   ####################
+   #classes distinctes#
+   ####################
+
+
+    L=len(classequi)
+    while L>1:
+        for i in range(L-1):
+            if classequi[L-1][0] in classequi[i]:
+                classequi.remove(classequi[L-1])
+
+                break
+        L-=1
+
+
+   ########################
+   #affichage de classequi#
+   ########################
+
+    L=len(classequi)
+    if L==1:
+        print("there is 1 equivalent class: ")
+    else:
+        print("there are " + str(L) + " equivalent classes: ")
+    print(classequi)
+
+    input("select enter to continu")
+
+name: Python Package using Conda
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        $CONDA/bin/conda env update --file environment.yml --name base
+    - name: Lint with flake8
+      run: |
+        $CONDA/bin/conda install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        $CONDA/bin/flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        $CONDA/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        conda install pytest
+        $CONDA/bin/pytest
